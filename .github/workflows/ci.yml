@@ -1,0 +1,51 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  complete:
+    name: ${{ matrix.dir }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [lesson-01/complete, lesson-02/complete, lesson-03/complete, lesson-04/complete,
+              lesson-05/complete, lesson-06/complete, lesson-07/complete, lesson-08/complete,
+              go-backend-academy-complete]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: taskdb_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d taskdb_test"
+          --health-interval 2s --health-timeout 3s --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://app:app@127.0.0.1:5432/taskdb_test?sslmode=disable
+    defaults:
+      run:
+        working-directory: code/${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: code/${{ matrix.dir }}/go.mod
+          cache-dependency-path: code/${{ matrix.dir }}/go.*
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+
+  starters:
+    # Starters have TODOs and failing tests on purpose: they must compile, not pass.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: code/lesson-08/starter/go.mod
+      - run: |
+          for d in code/lesson-0*/starter; do
+            echo "== $d"
+            (cd "$d" && go vet ./... && go test -count=1 -run '^$' ./...) || exit 1
+          done

@@ -1,0 +1,5 @@
+.env
+*.test
+/api
+code/**/api
+.DS_Store
