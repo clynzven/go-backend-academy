@@ -8,9 +8,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [lesson-01/complete, lesson-02/complete, lesson-03/complete, lesson-04/complete,
-              lesson-05/complete, lesson-06/complete, lesson-07/complete, lesson-08/complete,
-              go-backend-academy-complete]
+        dir: [code/lesson-01/complete, code/lesson-02/complete, code/lesson-03/complete,
+              code/lesson-04/complete, code/lesson-05/complete, code/lesson-06/complete,
+              code/lesson-07/complete, code/lesson-08/complete, code/go-backend-academy-complete,
+              part-2/lesson-01/complete]
     services:
       postgres:
         image: postgres:16-alpine
@@ -26,18 +27,18 @@ jobs:
       TEST_DATABASE_URL: postgres://app:app@127.0.0.1:5432/taskdb_test?sslmode=disable
     defaults:
       run:
-        working-directory: code/${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: code/${{ matrix.dir }}/go.mod
-          cache-dependency-path: code/${{ matrix.dir }}/go.*
+          go-version-file: ${{ matrix.dir }}/go.mod
+          cache-dependency-path: ${{ matrix.dir }}/go.*
       - run: go vet ./...
       - run: go test -race -count=1 ./...
 
   starters:
-    # Starters have TODOs and failing tests on purpose: they must compile, not pass.
+    # Starters have TODOs (Part 2: vulnerabilities) and failing tests on purpose: they must compile, not pass.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +46,7 @@ jobs:
         with:
           go-version-file: code/lesson-08/starter/go.mod
       - run: |
-          for d in code/lesson-0*/starter; do
+          for d in code/lesson-0*/starter part-2/lesson-*/starter; do
             echo "== $d"
             (cd "$d" && go vet ./... && go test -count=1 -run '^$' ./...) || exit 1
           done

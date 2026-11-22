@@ -1,4 +1,13 @@
-# Go Backend Academy, Part 1: Zero to Production API
+# Go Backend Academy
+
+> **Vulnerable on purpose.** Part 1's code and every Part 2 `starter` folder contain security holes that the
+> course exploits on camera. Use them to learn on your own machine; never deploy them. The `exploit/` scripts
+> refuse any target that isn't localhost.
+
+- **Part 1: Zero to Production API** builds the API (below).
+- **Part 2: Attack & Patch Lab** attacks it and hardens it: see [Part 2](#part-2-attack--patch-lab).
+
+## Part 1: Zero to Production API
 
 A Multi-Tenant Task & Invoice API in pure Go, built lesson by lesson with the standard library
 (`net/http`, `encoding/json`, `database/sql`, `context`, `log/slog`) and one dependency: the `pgx`
@@ -44,6 +53,25 @@ make test-integration
 Part 1 is correct but naive in a few places, because Part 2 (the Attack & Patch Lab) exploits and fixes them:
 no server timeouts, no request body size limit, and `X-Tenant-ID` trusted as sent. Don't deploy it to the
 internet as-is.
+
+## Part 2: Attack & Patch Lab
+
+Every lesson starts from the previous one's hardened code, runs a real exploit against it on localhost, then
+patches it and turns the exploit into a test.
+
+| # | Lesson | Attack | Folder |
+|---|---|---|---|
+| 1 | Slowloris & the Memory Bomb | 1,100 slow connections; one 300 MB request | [`part-2/lesson-01`](part-2/lesson-01) |
+
+- `part-2/lesson-NN/starter`: vulnerable, with the exploit scripts in `exploit/` and tests that fail until you patch it.
+- `part-2/lesson-NN/complete`: patched; every test passes and the exploits fail.
+- Branches: `part2-lesson-NN-starter` and `part2-lesson-NN-complete`.
+
+```
+cd part-2/lesson-01/starter
+(ulimit -n 1024; DATABASE_URL='postgres://app:app@127.0.0.1:5432/taskdb?sslmode=disable' go run ./cmd/api) &
+ulimit -n 4096; go run ./exploit/slowloris -conns 1100 -for 20s
+```
 
 ## License
 
