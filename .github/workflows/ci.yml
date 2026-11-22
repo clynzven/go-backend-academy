@@ -11,7 +11,9 @@ jobs:
         dir: [code/lesson-01/complete, code/lesson-02/complete, code/lesson-03/complete,
               code/lesson-04/complete, code/lesson-05/complete, code/lesson-06/complete,
               code/lesson-07/complete, code/lesson-08/complete, code/go-backend-academy-complete,
-              part-2/lesson-01/complete]
+              part-2/lesson-01/complete, part-2/lesson-02/complete, part-2/lesson-03/complete,
+              part-2/lesson-04/complete, part-2/lesson-05/complete, part-2/lesson-06/complete,
+              part-2/lesson-07/complete, part-2/lesson-08/complete, part-2/go-backend-academy-hardened]
     services:
       postgres:
         image: postgres:16-alpine

@@ -1,0 +1,49 @@
+# Local PostgreSQL for development: docker compose up -d
+#
+# The whole lesson 8 setup (3 API copies behind the proxy):
+#   JWT_SECRET=$(openssl rand -base64 32) WEBHOOK_SECRET=$(openssl rand -base64 32) \
+#   docker compose --profile cluster up -d --build
+# then talk to the proxy on http://127.0.0.1:8000.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: taskdb
+    ports:
+      - "127.0.0.1:5432:5432" # this computer only, like our API
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d taskdb"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    profiles: [cluster]
+    build: .
+    deploy:
+      replicas: 3
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/taskdb?sslmode=disable
+      ADDR: 0.0.0.0:8080
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?set WEBHOOK_SECRET}
+      TRUSTED_PROXIES: 172.16.0.0/12 # the compose network: only the proxy reaches the API
+    depends_on:
+      db:
+        condition: service_healthy
+
+  proxy:
+    profiles: [cluster]
+    build: .
+    entrypoint: ["/usr/local/bin/proxy", "-listen", "0.0.0.0:8000",
+                 "-backends", "http://api:8080,http://api:8080,http://api:8080"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on: [api]
+
+volumes:
+  pgdata:
